@@ -1,0 +1,5 @@
+14) PURGE_OLD_LOGS (older than 14 days)
+
+# --- 14_PURGE_OLD_LOGS ---
+Get-ChildItem "C:\OPRT\logs\run_*.log" | Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-14) } | Remove-Item -Force
+"Old logs (>14d) removed."

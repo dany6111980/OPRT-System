@@ -1,0 +1,15 @@
+
+*** a/runners/eod_agent.py
+--- b/runners/eod_agent.py
+@@
+-from analytics import run_daily_kpis
++from analytics import run_daily_kpis
++from core.coc import compute_and_persist
++from pathlib import Path
+@@
+ def nightly():
+-    # existing steps...
++    # Step 1: recompute CoC & persist
++    _ = compute_and_persist(Path("C:/OPRT/data/derived"), years=5, macro_years=15)
++    # Step 2: existing KPI routines (optionally compare CoC ON vs OFF)
+     run_daily_kpis(...)

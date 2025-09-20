@@ -1,0 +1,23 @@
+{
+  "enabled": true,
+  "dry_run": false,
+  "hours_for_finder": 48,
+  "min_labelled": 20,
+  "target_band": [65.0, 75.0],
+  "promote_if": {
+    "inside_band": true,
+    "improvement_min_pct_points": 2.0,
+    "cooldown_hours": 12
+  },
+  "engine_defaults": {
+    "strong_ceff_enter_active": 66,
+    "strong_ceff_enter_quiet": 70,
+    "strong_angle_min": 12,
+    "strong_angle_max": 35,
+    "trap_cutoff": 0.80,
+    "lite_angle_min": 12,
+    "lite_angle_max": 45,
+    "lite_vol_enter": 0.90,
+    "lite_rescue_min_vol": 0.85
+  }
+}

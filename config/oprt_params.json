@@ -1,0 +1,23 @@
+{
+  "version": "nightly-auto",
+  "generated_at": "2025-08-26T21:55:01.630959+00:00",
+  "thresholds": {
+    "full_cut": 55,
+    "half_cut": 35,
+    "trap_block_thr": 0.55,
+    "tf_phase_max": 35,
+    "wcode_min": 0.6,
+    "use_watch": true
+{
+  "version": "nightly-auto",
+  "params_hash": "fc55_hc35_tb0_55_tf35_wm0_6_uwTrue",
+  "thresholds": {
+    "wcode_sensitivity": { "min_conf": 0.02, "buy_only_above": 0.015 },
+    "engine": { "resilience": { "retry_failed_runs": 1, "retry_gap_min": 10 } }
+  }
+}
+
+  },
+  "gkp": null,
+  "params_hash": "fc55_hc35_tb0.55_tf35_wm0.6_uwTrue"
+}

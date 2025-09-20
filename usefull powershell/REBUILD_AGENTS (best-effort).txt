@@ -1,0 +1,8 @@
+1) REBUILD_AGENTS (best-effort)
+
+Reads headlines/flows if present; otherwise builds with neutral mocks.
+# --- 1_REBUILD_AGENTS ---
+$proj="C:\OPRT"; $py=Join-Path $proj ".venv\Scripts\python.exe"
+$agents=Join-Path $proj "agents"; $heads=Join-Path $proj "headlines.csv"; $flows=Join-Path $proj "flows_btc.csv"
+. (Join-Path $proj ".venv\Scripts\Activate.ps1")
+& $py (Join-Path $proj "build_agents_universal.py") --agents_dir $agents --sentiment_csv $heads --flows_csv $flows

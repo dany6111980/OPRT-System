@@ -1,0 +1,19 @@
+8) CREATE_HOURLY_TASK_LOGGED_IN (no password)
+
+Creates/updates a task that runs every hour while you’re logged in.
+
+Run PowerShell as Administrator the first time.
+
+# --- 8_CREATE_HOURLY_TASK_LOGGED_IN ---
+$proj="C:\OPRT"; $ps1 = Join-Path $proj "run_hourly.ps1"; $task="OPRT Hourly Run (Logged-In)"
+if (!(Test-Path $ps1)) { throw "Missing $ps1" }
+$start = (Get-Date).Date.AddHours((Get-Date).Hour).AddMinutes(59)
+if ($start -lt (Get-Date)) { $start = $start.AddHours(1) }
+$act = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$ps1`""
+$trg = New-ScheduledTaskTrigger -Once -At $start -RepetitionInterval (New-TimeSpan -Hours 1) -RepetitionDuration (New-TimeSpan -Days 3650)
+$set = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -MultipleInstances IgnoreNew -StartWhenAvailable
+$usr = "$env:UserDomain\$env:UserName"
+$pri = New-ScheduledTaskPrincipal -UserId $usr -RunLevel Highest -LogonType InteractiveToken
+try { Unregister-ScheduledTask -TaskName $task -Confirm:$false -ErrorAction SilentlyContinue } catch {}
+Register-ScheduledTask -TaskName $task -Action $act -Trigger $trg -Settings $set -Principal $pri | Out-Null
+Write-Host "Task '$task' created to start at $start and repeat hourly." -ForegroundColor Green

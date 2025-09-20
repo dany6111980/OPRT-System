@@ -1,0 +1,71 @@
+{
+  "tf_alignment": {
+    "H4": "bull",
+    "H1": "bull"
+  },
+  "indicators": {
+    "rsi": {
+      "H4": {
+        "value": 65,
+        "slope": "+"
+      },
+      "H1": {
+        "value": 70,
+        "slope": "+"
+      }
+    },
+    "macd": {
+      "H4": {
+        "value": "pos",
+        "hist_slope": "+"
+      },
+      "H1": {
+        "value": "pos",
+        "hist_slope": "+"
+      }
+    },
+    "ema": {
+      "H4": {
+        "value": "50>200",
+        "slope": "+"
+      },
+      "H1": {
+        "value": "50>200",
+        "slope": "+"
+      }
+    }
+  },
+  "volume": {
+    "ratio_1h_to_avg20": 1.5
+  },
+  "leaders": {
+    "ETH": "+",
+    "SOL": "+",
+    "breadth": "risk_on"
+  },
+  "flows": {
+    "oi": "up",
+    "funding": "pos",
+    "liq_skew": "long"
+  },
+  "sentiment_index": 2,
+  "levels": {
+    "resistance": [
+      4.0,
+      4.1
+    ],
+    "support": [
+      3.8,
+      3.7
+    ],
+    "invalidation": null
+  },
+  "scenarios": [],
+  "phase_vector": [
+    0.9,
+    0.95,
+    0.92,
+    0.93,
+    0.91
+  ]
+}

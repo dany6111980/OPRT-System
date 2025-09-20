@@ -1,0 +1,10 @@
+11) SNAPSHOT_PROJECT_ZIP (safe backup)
+
+Creates a dated zip of the whole project (skips the venv to keep it small).
+
+# --- 11_SNAPSHOT_PROJECT_ZIP ---
+$proj="C:\OPRT"; $out=Join-Path $proj ("snapshot_{0:yyyyMMdd_HHmm}" -f (Get-Date))
+$zip="$out.zip"
+$items = Get-ChildItem $proj -Force | Where-Object { $_.Name -ne ".venv" }
+Compress-Archive -Path $items.FullName -DestinationPath $zip -Force
+"`nSnapshot: $zip"

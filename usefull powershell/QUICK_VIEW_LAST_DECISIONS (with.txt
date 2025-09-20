@@ -1,0 +1,9 @@
+4) QUICK_VIEW_LAST_DECISIONS (with new fields)
+
+Shows the last 8 rows and the patch fields you care about.
+
+# --- 4_QUICK_VIEW_LAST_DECISIONS ---
+$jsonl = "C:\OPRT\mirror_loop_unified_decisions.jsonl"
+Get-Content $jsonl -Tail 8 | ConvertFrom-Json |
+  Select-Object timestamp_utc,signal,size_band,hard_gate_reason,sizing_cap,volume_ratio,phase_angle_deg,herald_ok,flows_ok,leaders_ok |
+  Format-Table -AutoSize

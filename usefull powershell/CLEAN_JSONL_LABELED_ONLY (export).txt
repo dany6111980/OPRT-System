@@ -1,0 +1,15 @@
+13) CLEAN_JSONL_LABELED_ONLY (export)
+
+Keeps only rows where BUY/SELL and next_price exists → new clean file.
+
+# --- 13_CLEAN_JSONL_LABELED_ONLY ---
+$proj="C:\OPRT"; $in=Join-Path $proj "mirror_loop_unified_decisions.jsonl"; $out=Join-Path $proj "mirror_loop_unified_decisions.clean.jsonl"
+$buf = @()
+Get-Content $in | ForEach-Object {
+  try {
+    $o = $_ | ConvertFrom-Json
+    if ($o.signal -in @('BUY','SELL') -and $o.next_price -ne $null -and $o.price -ne $null) { $buf += $_ }
+  } catch {}
+}
+$buf | Set-Content $out -Encoding UTF8
+"`nWrote clean file: $out"

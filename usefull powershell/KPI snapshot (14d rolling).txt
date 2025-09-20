@@ -1,0 +1,5 @@
+KPI snapshot (14d rolling):
+
+$out = Join-Path $proj ("perf_summary_{0}.csv" -f (Get-Date -Format "yyyyMMdd_HHmmss"))
+& $py (Join-Path $proj "analyze_perf.py") --days 14 --jsonl $jsonl --csv $csv --export_csv $out
+Get-Content $out | Select-Object -First 60

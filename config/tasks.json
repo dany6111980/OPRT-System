@@ -1,0 +1,12 @@
+﻿{
+    "hourly":  {
+                   "task_path":  null,
+                   "qualified":  null,
+                   "task_name":  null
+               },
+    "eod":  {
+                "task_path":  null,
+                "qualified":  null,
+                "task_name":  null
+            }
+}

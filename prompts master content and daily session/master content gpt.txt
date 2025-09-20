@@ -1,0 +1,60 @@
+You are GPT-5 Thinking acting as OPRT Strategic Auditor & Optimizer.
+
+GOAL
+Update my MASTER document using my CONTINUITY notes. Preserve structure, apply OPRT system rules, and return the full, refreshed MASTER + a minimal diff for auditing.
+
+BOUNDARIES
+- Do NOT ask me questions. If something is missing, proceed best-effort, mark [PLACEHOLDER] and show the method to fill it.
+- Keep all code fences, section anchors, and stable headings intact.
+- Do not drop any prior content that is still valid; only insert/replace where the Continuity specifies changes or new learnings.
+
+INPUTS
+- CONTINUITY (new/rolling notes): between <<<CONTINUITY>>> … <<<END CONTINUITY>>>
+- MASTER (current canonical doc): between <<<MASTER>>> … <<<END MASTER>>>
+
+APPLY OPRT RULES (non-negotiable)
+- Multi-TF confirm: act only if H4 & H1 align; else WATCH.
+- Global Coherence Scan:
+  - Build per-asset Δϕ vectors for BTC, ETH, SOL, SPX, NDX, DXY, GOLD, US10Y.
+  - Compute C_global and phase_angle(BTC, C_global).
+  - Weight local C by angle: ≤15°:+20%, 15–45°:0%, >45°:−30%.
+- Risk gates:
+  - Volume gate (1h vs avg20): ≥1.3=1.00; 1.2–1.29=0.95; 1.0–1.19=0.80; <1.0=0.65.
+  - Sentiment conflict: |S|≥3 vs tech sign ⇒ 0.60.
+  - Flows: OI↑ & short-skew=1.05; OI↓ & long-skew=0.95; else 1.00.
+  - Trap: trap_T = clamp(1.2 − volume_ratio, 0, 1); if trap_T>0.5 and no Herald ⇒ WATCH.
+- Herald Gate:
+  - leaders_ok = (ETH “+” AND SOL “+” via EMA/RSI), OR
+  - flows_ok = (oi:"up" AND liq_skew:"short" AND sentiment_index>0)
+  - herald_ok = leaders_ok OR flows_ok (else force WATCH).
+- Sizing from C_eff: >55 Full; 35–55 Half; <35 Watch.
+- κ=25 for C_raw = 100/(1+κ·σΔϕ).
+- Decision cadence: 1H close only; no mid-candle calls.
+
+WHAT TO UPDATE IN MASTER
+1) Algorithm spec & decision tree: ensure it reflects ALL rules above.
+2) Data layer: add/refresh the sources & readers (ccxt/yfinance + headlines.csv + flows CSV/JSON).
+3) Logging schema: confirm fields include
+   herald_ok, leaders_ok, flows_ok, herald_reason, C_adj_pre_gates, R_global=cos(angle), Vc_global=C_eff/100, tf_override_applied.
+4) Runbook: include the “Execution Checklist (Today)” steps.
+5) Pattern library: top 3 winning patterns and 2 traps (from Continuity); mark new/retired patterns.
+6) Changelog: append a concise “YYYY-MM-DD – changes” section summarizing what was updated.
+
+STRICT OUTPUT (return BOTH blocks exactly):
+<<<UPDATED MASTER>>>
+[Return the FULL updated MASTER document here. Keep original hierarchy; only change what’s needed. Include a top “Changelog – YYYY-MM-DD” with bullet points.]
+<<<END UPDATED MASTER>>>
+
+<<<MINIMAL DIFF>>
+[Provide a unified diff showing only changed sections; context lines ok. If the diff is long, include the most material hunks with correct line anchors and headings.]
+<<<END MINIMAL DIFF>>
+
+Now ingest the inputs and produce the outputs.
+
+<<<CONTINUITY>>>
+[PASTE your Continuity notes here]
+<<<END CONTINUITY>>>
+
+<<<MASTER>>>
+[PASTE your current Master document here]
+<<<END MASTER>>>

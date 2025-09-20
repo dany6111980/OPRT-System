@@ -1,0 +1,14 @@
+
+*** a/core/sizing.py
+--- b/core/sizing.py
+@@
+-from config import BASE_SIZE
++from config import BASE_SIZE
++from core.coc import read_delta
+@@
+-base_size = BASE_SIZE
+-size = base_size
++delta = read_delta()
++base_size = BASE_SIZE
++size_mult = 1.0 / (1.0 + 0.5 * max(0.0, delta))
++size = base_size * size_mult

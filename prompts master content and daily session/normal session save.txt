@@ -1,0 +1,24 @@
+Use this at the end of each working day:
+
+From today’s session, create a Context Capsule in Markdown.
+
+Include exactly these sections:
+
+Results — predictions, signals, calculations, outputs, code runs.
+
+Instructions / Workflows — step-by-step routines, execution steps, or automation instructions defined today.
+
+Reasoning Chain — why thresholds, formulas, or parameters were chosen; explanations of decisions.
+
+Decisions Made — changes to architecture, thresholds, formulas, logic, or strategy. What was confirmed vs. discarded.
+
+Open Issues — problems, bugs, or uncertainties raised.
+
+Next Actions — tasks assigned for the next session/day.
+
+Architecture & Code (if updated) — any code snippets, formulas, or file structures that were changed.
+
+Format with a date at the top like this:
+# Context Capsule — YYYY-MM-DD
+
+Make it exhaustive and detailed so no insight is lost.

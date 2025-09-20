@@ -1,0 +1,10 @@
+6) OVERLAY_COMPARE (alt strategies league)
+
+Compares a few toggles (volume/flows/herald/strict/loose).
+
+# --- 6_OVERLAY_COMPARE ---
+$proj="C:\OPRT"; $py=Join-Path $proj ".venv\Scripts\python.exe"
+$out = Join-Path $proj ("alt_compare_{0:yyyyMMdd}.csv" -f (Get-Date))
+. (Join-Path $proj ".venv\Scripts\Activate.ps1")
+& $py (Join-Path $proj "alt_strategies_eval.py") --days 14 --out $out
+Get-Content $out

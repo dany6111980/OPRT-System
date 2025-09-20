@@ -1,0 +1,21 @@
+12) POSITION_SIZING_HELPER (entry/stop, risk 0.5%)
+
+Adjust $equity, $riskPct, $entry, $stop. Binance min step for BTC is 0.0001.
+
+# --- 12_POSITION_SIZING_HELPER ---
+$equity = 1000.0     # USDT account size
+$riskPct= 0.005      # 0.5% risk per trade
+$entry  = 113000.0   # update
+$stop   = 114200.0   # update
+
+$riskUSD   = [double]($equity * $riskPct)
+$stopDist  = [math]::Abs([double]$stop - [double]$entry)
+$step      = 0.0001
+$qtyBTCraw = $riskUSD / $stopDist
+$qtyBTC    = [math]::Floor($qtyBTCraw / $step) * $step
+$notional  = $qtyBTC * [double]$entry
+
+[pscustomobject]@{
+  entry=[math]::Round([double]$entry,2); stop=[math]::Round([double]$stop,2)
+  riskUSD=[math]::Round($riskUSD,2); qtyBTC="{0:N4}" -f $qtyBTC; notional=[math]::Round($notional,2)
+}

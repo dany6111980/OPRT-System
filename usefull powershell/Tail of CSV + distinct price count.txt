@@ -1,0 +1,10 @@
+Tail of CSV + distinct price count (you ran this already—good to keep in a helper script):
+
+
+Import-Csv $csv | Select-Object -Last 12 |
+  Format-Table timestamp_utc,price,signal,size_band -AutoSize
+
+Import-Csv $csv | Select-Object -Last 24 |
+  Group-Object price | Sort-Object Count -Desc |
+  Select-Object Name,Count | Format-Table -AutoSize
+

@@ -1,0 +1,18 @@
+From this Context Capsule, extract only the permanent updates that must be added to the Master Context.
+
+Keep these categories:
+
+Architecture Decisions & Agent Logic
+
+Core Theory & Formulas
+
+Instruction Set Changes
+
+File/Folder Structure Updates
+
+Permanent Workflows & Rules
+
+Exclude temporary results, daily predictions, one-time issues, and next actions.
+
+Format in Markdown under the heading:
+## YYYY-MM-DD — Master Context Update

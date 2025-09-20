@@ -1,0 +1,19 @@
+
+*** a/core/gates.py
+--- b/core/gates.py
+@@
+-from config import T_FULL_DEFAULT, T_HALF_DEFAULT
++from config import T_FULL_DEFAULT, T_HALF_DEFAULT
++from core.coc import read_delta
+@@
+-# thresholds baseline
+-T_full = T_FULL_DEFAULT
+-T_half = T_HALF_DEFAULT
++delta = read_delta()
++T_full = T_FULL_DEFAULT + 10.0 * delta
++T_half = T_HALF_DEFAULT + 5.0 * delta
+@@
+-# trap probability computed above -> trap_T
++# trap probability computed above -> trap_T
++# bend trap with CoC (cap at 1.0)
++trap_T = min(1.0, trap_T * (1.0 + 0.6 * delta))

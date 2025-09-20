@@ -1,0 +1,13 @@
+5) RUN_KPIs_14D (timestamped CSV, no file-lock)
+
+Runs analyzer over repaired JSONL (or switch to standard file) and writes a dated CSV.
+
+# --- 5_RUN_KPIs_14D ---
+$proj="C:\OPRT"; $py=Join-Path $proj ".venv\Scripts\python.exe"
+$jsonl = Join-Path $proj "mirror_loop_unified_decisions.repaired.jsonl"
+$csv_in= Join-Path $proj "mirror_loop_unified_run.csv"
+$out   = Join-Path $proj ("perf_summary_{0:yyyyMMdd_HHmmss}.csv" -f (Get-Date))
+. (Join-Path $proj ".venv\Scripts\Activate.ps1")
+& $py (Join-Path $proj "analyze_perf.py") --days 14 --jsonl $jsonl --csv $csv_in --export_csv $out
+"`n--- wrote: $out ---"
+Get-Content $out

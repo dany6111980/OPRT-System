@@ -1,0 +1,12 @@
+2) RUN_MIRROR_LOOP_ONCE (pulls price, writes CSV+JSONL)
+
+One clean “decision” run using the latest Binance 1h close.
+
+
+# --- 2_RUN_MIRROR_LOOP_ONCE ---
+$proj="C:\OPRT"; $py=Join-Path $proj ".venv\Scripts\python.exe"; $ml=Join-Path $proj "mirror_loop_v0_3_plus.py"
+$agents=Join-Path $proj "agents"; $csv=Join-Path $proj "mirror_loop_unified_run.csv"; $jsonl=Join-Path $proj "mirror_loop_unified_decisions.jsonl"
+. (Join-Path $proj ".venv\Scripts\Activate.ps1")
+$btc = & $py -c "import ccxt; print(ccxt.binance().fetch_ohlcv('BTC/USDT','1h',limit=1)[-1][4])"
+"BTC close: $btc"
+& $py $ml --agents_dir $agents --csv $csv --jsonl $jsonl --price $btc

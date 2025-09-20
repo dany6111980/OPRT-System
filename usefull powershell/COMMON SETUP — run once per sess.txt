@@ -1,0 +1,9 @@
+0) COMMON SETUP — run once per session
+
+Use this when you open a fresh terminal (it just defines paths & activates venv).
+
+# --- 0_COMMON_SETUP ---
+$proj = "C:\OPRT"
+$py   = Join-Path $proj ".venv\Scripts\python.exe"
+. (Join-Path $proj ".venv\Scripts\Activate.ps1")
+Write-Host "Venv ready. Project: $proj" -ForegroundColor Green

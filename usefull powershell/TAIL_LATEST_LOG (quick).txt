@@ -1,0 +1,4 @@
+10) TAIL_LATEST_LOG (quick)
+
+# --- 10_TAIL_LATEST_LOG ---
+Get-ChildItem "C:\OPRT\logs\run_*.log" | Sort-Object LastWriteTime -Desc | Select -First 1 | Get-Content -Tail 120

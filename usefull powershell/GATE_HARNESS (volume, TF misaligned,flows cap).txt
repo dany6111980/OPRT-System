@@ -1,0 +1,17 @@
+7) GATE_HARNESS (volume, TF misaligned, flows cap)
+
+One-shot sanity checks that your hard gates behave as expected.
+
+# --- 7_GATE_HARNESS ---
+$proj="C:\OPRT"; $py=Join-Path $proj ".venv\Scripts\python.exe"; $ml=Join-Path $proj "mirror_loop_v0_3_plus.py"
+$agents=Join-Path $proj "agents"; $csv=Join-Path $proj "mirror_loop_unified_run.csv"; $jsonl=Join-Path $proj "mirror_loop_unified_decisions.jsonl"
+. (Join-Path $proj ".venv\Scripts\Activate.ps1")
+$btc = & $py -c "import ccxt; print(ccxt.binance().fetch_ohlcv('BTC/USDT','1h',limit=1)[-1][4])"
+Write-Host "`n== BASELINE ==" -ForegroundColor Yellow
+& $py $ml --agents_dir $agents --csv $csv --jsonl $jsonl --price $btc
+Write-Host "`n== GATE: Volume < 1.2 => WATCH ==" -ForegroundColor Yellow
+& $py $ml --agents_dir $agents --csv $csv --jsonl $jsonl --price $btc --volume_ratio 1.05
+Write-Host "`n== GATE: TF misaligned => WATCH ==" -ForegroundColor Yellow
+& $py $ml --agents_dir $agents --csv $csv --jsonl $jsonl --price $btc --tf_override PARTIAL
+Write-Host "`n== GATE: Flows conflict => cap Half ==" -ForegroundColor Yellow
+& $py $ml --agents_dir $agents --csv $csv --jsonl $jsonl --price $btc --flows_json "{'oi':'down','funding':'flat','liq_skew':'long'}" --volume_ratio 1.35

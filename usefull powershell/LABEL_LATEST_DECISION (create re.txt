@@ -1,0 +1,11 @@
+3) LABEL_LATEST_DECISION (create repaired JSONL)
+
+Adds next_price to the last row safely (no Excel locking).
+
+# --- 3_LABEL_LATEST_DECISION ---
+$proj="C:\OPRT"; $py=Join-Path $proj ".venv\Scripts\python.exe"
+$jsonl = Join-Path $proj "mirror_loop_unified_decisions.jsonl"
+$out   = Join-Path $proj "mirror_loop_unified_decisions.repaired.jsonl"
+. (Join-Path $proj ".venv\Scripts\Activate.ps1")
+& $py (Join-Path $proj "relabel_next_prices.py") --in $jsonl --out $out
+"`nWrote: $out"

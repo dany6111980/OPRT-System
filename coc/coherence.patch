@@ -1,0 +1,14 @@
+
+*** a/core/coherence.py
+--- b/core/coherence.py
+@@
+-from config import KAPPA_0 as kappa0
++from config import KAPPA_0 as kappa0
++from core.coc import read_delta
+@@
+-# existing sigma_delta_phi computed above
+-kappa = kappa0
++# CoC bend: adjust kappa by environment delta
++delta = read_delta()
++kappa = kappa0 * (1.0 + 0.8 * delta)
+ C_raw = 100.0 / (1.0 + kappa * sigma_delta_phi)

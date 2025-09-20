@@ -1,0 +1,7 @@
+# secrets & archives
+_archive/
+secrets/
+config/*key*.txt
+*.key
+*key*.txt
+.env

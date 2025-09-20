@@ -1,0 +1,9 @@
+9) KICK_TASK_AND_SHOW_LOG (start now + tail)
+
+Starts the logged-in task immediately and shows the latest log tail.
+
+# --- 9_KICK_TASK_AND_SHOW_LOG ---
+$task="OPRT Hourly Run (Logged-In)"; $logs="C:\OPRT\logs\run_*.log"
+Start-ScheduledTask -TaskName $task
+Start-Sleep 5
+Get-ChildItem $logs | Sort-Object LastWriteTime -Desc | Select-Object -First 1 | Get-Content -Tail 80

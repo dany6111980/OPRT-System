@@ -1,0 +1,91 @@
+You are GPT-5 Thinking acting as OPRT Strategic Auditor & Optimizer for my BTC mirror system.
+
+GOAL (today)
+Run the full OPRT daily session and return outputs in EXACTLY my house sections. If any input is missing, proceed best-effort with [PLACEHOLDER] and include the method to fill it.
+
+INPUTS & ASSUMPTIONS
+- Code: /mnt/data/mirror_loop_v0_3_plus.py (patched); agents in ./agents
+- Logs: ./mirror_loop_unified_run.csv, ./mirror_loop_unified_decisions.jsonl
+- Market basket: BTC, ETH, SOL, SPX, NDX, DXY, GOLD, US10Y
+- Timeframe policy: H4 + H1; decision cadence = H1 close only
+- Data readers (free):
+  - Crypto (1h/4h): Binance via ccxt
+  - Macro (1h→4h): Yahoo Finance via yfinance
+  - Sentiment: headlines.csv (+1/0/−1, time-decayed 24h)
+  - Flows: flows_btc.csv or flows_btc.json (oi/funding/liq_skew normalized)
+
+OPRT RULES TO ENFORCE (non-negotiable)
+- Multi-TF confirm required for BUY/SELL; else WATCH.
+- Global Coherence Scan:
+  - Build Δϕ per asset, C_global, and phase_angle(BTC, C_global).
+  - Weight C_local by angle: ≤15°:+20%; 15–45°:0%; >45°:−30%.
+- Risk gates:
+  - Volume gate (1h vs avg20): ≥1.3=1.00; 1.2–1.29=0.95; 1.0–1.19=0.80; <1.0=0.65.
+  - Sentiment conflict (|S|≥3 vs tech sign) ⇒ 0.60.
+  - Flows: OI↑ & short-skew=1.05; OI↓ & long-skew=0.95; else 1.00.
+  - Trap: trap_T = clamp(1.2 − volume_ratio, 0, 1); if trap_T>0.5 and no Herald ⇒ WATCH.
+- Herald Gate:
+  - leaders_ok = (ETH “+” AND SOL “+” via EMA/RSI), OR
+  - flows_ok = (oi:"up" AND liq_skew:"short" AND sentiment_index>0)
+  - herald_ok = leaders_ok OR flows_ok (else force WATCH).
+- Sizing: >55 Full; 35–55 Half; <35 Watch.
+- κ=25; C_raw = 100/(1+κ·σΔϕ).
+- Never mid-candle calls.
+
+DELIVERABLES — RETURN **THESE SEVEN SECTIONS ONLY**:
+
+### Core Idea
+One-paragraph reminder of OPRT and today’s audit goal.
+
+### 1. DAILY SYNTHESIS
+- State of system: code health vs rules; divergences.
+- Accuracy snapshot from logs (if present):
+  - Overall win%, by size band (Full/Half/Watch) and signal (BUY/SELL).
+  - Avg C_raw & C_eff; trend last 5–10 entries.
+- Coherence: current C_global profile; phase_angle bins hit (≤15°, 15–45°, >45°).
+- Anomalies/data gaps: list missing inputs (volume_avg20, flows, leaders, sentiment, etc.).
+
+### 2. STRATEGIC TASKING (Top 3)
+- 1–3 high-impact tasks to raise accuracy/coherence.
+- For each: why now, expected lift, ≤3-bullet plan.
+- If code change, include a minimal diff patch.
+
+### 3. MIRROR LOOP COORDINATION
+- (a) Bull vs Bear prompt templates for BTC/ETH/SOL/SPX/NDX/DXY/GOLD/US10Y returning v0.3 JSON schema:
+  `phase_vector(5)`, `tf_alignment`, `indicators` (RSI/MACD/EMA + slopes), `volume.ratio_1h_to_avg20`, `leaders`, `flows`, `sentiment_index`, `levels`, `scenarios`.
+- (b) Phase math check: confirm normalized dot product → acos for phase_angle; replace function if not identical.
+- (c) Mirror thought experiment:
+  - Use today’s (or plausible) A/B vectors per asset (or read logs if present).
+  - Compute Δϕ_BTC → C_raw → angle weighting → C_eff with ALL gates (state assumptions).
+  - Output provisional signal, size_band, trap_T, herald_ok.
+
+### 4. DATA TRACKING
+- Emit one-line JSONL specimen and CSV header with:
+  `herald_ok`, `leaders_ok`, `flows_ok`, `herald_reason`, `C_adj_pre_gates`, `tf_override_applied`.
+- Suggest field renames/new metrics (e.g., `R_global = cos(phase_angle)`, `Vc_global = C_eff/100`).
+- Provide a jq example to filter last 14 decisions by size band.
+
+### 5. SELF-IMPROVEMENT
+- From logs or mock synthesis: top 3 winning patterns and 2 traps (e.g., low-vol breakouts, global divergence).
+- Calibrate rules if needed (e.g., auto-downgrade Full→Half at |sentiment|=2).
+- Propose a 7-day loop (morning scan, midday adjustment, evening review with outcome labeling).
+
+### 6. CODE PATCHSET (Minimal & Safe)
+Patches for `mirror_loop_v0_3_plus.py` to:
+- Implement/confirm Herald Gate with `herald_reason`.
+- Ensure dot-product phase angle.
+- Add `R_global`, `Vc_global`, and CSV/JSONL fields.
+- Make `--flows` robust (single quotes & file/CSV options).
+
+### 7. EXECUTION CHECKLIST (Today)
+1) Update agent JSONs (or use templates).
+2) Compute/estimate `volume_ratio`, `sentiment_index`, `flows` (or auto-read).
+3) Run `mirror_loop_v0_3_plus.py` with `--price` (and optional overrides).
+4) Review `C_raw`, `C_global`, `phase_angle`, `C_eff`, `trap_T`, `herald_ok`.
+5) Decide: BUY/SELL/WATCH and size (Full/Half/Watch). Never mid-candle.
+
+DATA BLOCKS (PASTE IF AVAILABLE; ELSE LEAVE OUT)
+<<<H4_H1_CHART_NOTES>>> … <<<END>>>
+<<<HEADLINES_12_24H>>> … <<<END>>>
+<<<FLOWS_SNAPSHOT>>> … <<<END>>>
+<<<LAST_LOGS_SNIPPET>>> … <<<END>>>

@@ -1,0 +1,31 @@
+From this chat, extract ALL information relevant for my OPRT Mirror Loop project.
+
+Organize the output into a Context Capsule with these sections:
+
+1. **Results**
+   - Predictions/signals generated (bias, C_raw, C_eff, phase_angle, trap_T, size band, final decision).
+   - Performance outcomes (if available).
+
+2. **Instructions / Workflows**
+   - Step-by-step routines, pipelines, automation or logging instructions defined in this session.
+
+3. **Reasoning Chain**
+   - Explanations of why certain thresholds, formulas, or parameters were chosen.
+   - Rationale for architectural/logic changes.
+
+4. **Decisions Made**
+   - What was changed/added vs. what was discarded or kept.
+
+5. **Open Issues**
+   - Bugs, missing data, or uncertainties flagged.
+
+6. **Next Actions**
+   - Concrete tasks for the following session/day.
+
+7. **Architecture & Code**
+   - Code snippets, formulas, CLI/PS usage, file/folder structures, schema changes.
+
+Formatting Rules:
+- Use Markdown headings and numbering as above.
+- Be exhaustive — capture all details (logs, formulas, thresholds, file paths).
+- Insert [PLACEHOLDER] if information is missing, and note how to fill it.

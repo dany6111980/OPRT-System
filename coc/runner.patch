@@ -1,0 +1,25 @@
+
+*** a/runners/mirror_loop_v0_3_plus.py
+--- b/runners/mirror_loop_v0_3_plus.py
+@@
+-from core.engine import run_engine
++from core.engine import run_engine
++from core.coc import read_coc_stats
+@@
+-def main():
++def main():
+     # existing arg parsing & setup...
+-    results = run_engine(...)
++    stats = read_coc_stats()
++    delta = stats.get("delta", 0.0) if stats else 0.0
++    # Enforce TF rule based on CoC percentile if available
++    # top 25% => require H4&H1&D1; bottom 25% => H4&H1 only
++    coc_decile = stats.get("coc_decile", None)
++    tf_rule = "H4H1"
++    if coc_decile is not None:
++        if coc_decile >= 7:   # top 30% approx; tighten
++            tf_rule = "H4H1D1"
++        elif coc_decile <= 2: # bottom ~30%; loosen
++            tf_rule = "H4H1"
++    results = run_engine(tf_rule=tf_rule, coc_delta=delta)
+     # existing logging...
