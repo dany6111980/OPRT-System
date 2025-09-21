@@ -1,7 +1,26 @@
-# secrets & archives
-_archive/
-secrets/
-config/*key*.txt
-*.key
-*key*.txt
-.env
+# Python
+__pycache__/
+*.py[cod]
+*.pyd
+*.pyo
+
+# Virtualenv
+.venv/
+venv/
+
+# Runtime data/logs (kept in C:\OPRT)
+data/
+logs/
+reports/
+*.csv
+*.jsonl
+*.log
+
+# Allow test samples
+!sample_data/
+!sample_data/*.json
+
+# OS/IDE
+.DS_Store
+Thumbs.db
+.vscode/
