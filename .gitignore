@@ -1,7 +1,13 @@
-# secrets & archives
-_archive/
-secrets/
-config/*key*.txt
-*.key
-*key*.txt
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Envs / secrets
+.venv/
+venv/
 .env
+secrets/
+# OS/editor junk
+.DS_Store
+Thumbs.db
