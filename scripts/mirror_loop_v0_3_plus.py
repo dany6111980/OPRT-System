@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-# OPRT mirror loop v0.3+ (compat v3) — SWEET-SPOT TUNED (v0.3.2)
+# OPRT mirror loop v0.3+ (compat v3) — SWEET-SPOT TUNED (v0.3.3)
 # - Fastgate: size_band='Watch' (clear WATCH labeling)
 # - LITE: new --lite_rescue_min_vol (default 0.85) instead of hard 0.75
 # - Defaults aligned to strong-zone policy: C_eff enter 66/70, angles 12–35
+# - NEW: robust price resolution (--price_file / --price_cache_csv / --price_use_last_csv)
+
 from __future__ import annotations
 import os, json, math, argparse, csv
 from dataclasses import dataclass
@@ -23,6 +25,83 @@ def ensure_dir(path:str):
 def load_json(path:str):
     with open(path, 'r', encoding='utf-8') as f:
         return json.load(f)
+
+# ---------- robust float coercion ----------
+def sfloat(x, default: float = 0.0) -> float:
+    """Safe float: returns default for None/''/nan/inf or non-numeric."""
+    try:
+        if x is None:
+            return default
+        if isinstance(x, str) and x.strip() == "":
+            return default
+        v = float(x)
+        if math.isnan(v) or math.isinf(v):
+            return default
+        return v
+    except Exception:
+        return default
+# -------------------------------------------
+
+# ---------- NEW: price resolver ----------
+def resolve_price(args) -> float | None:
+    """
+    Priority:
+      1) --price if finite
+      2) --price_file JSON {"price": ...}
+      3) --price_cache_csv with column [price|close|Close|last|Last] or --price_field
+      4) last 'price' from our own output CSV if --price_use_last_csv
+    """
+    # 1) CLI numeric
+    try:
+        if hasattr(args, "price") and args.price is not None:
+            p = float(args.price)
+            if math.isfinite(p):
+                return p
+    except Exception:
+        pass
+
+    # 2) JSON file
+    if getattr(args, "price_file", None) and os.path.exists(args.price_file):
+        try:
+            with open(args.price_file, "r", encoding="utf-8") as f:
+                pj = json.load(f)
+            p = sfloat(pj.get("price"), float("nan"))
+            if math.isfinite(p):
+                return p
+        except Exception:
+            pass
+
+    # 3) CSV cache
+    if getattr(args, "price_cache_csv", None) and os.path.exists(args.price_cache_csv):
+        try:
+            import pandas as pd  # local import, only if used
+            df = pd.read_csv(args.price_cache_csv)
+            col = args.price_field
+            if not col:
+                for c in ("price","close","Close","last","Last"):
+                    if c in df.columns:
+                        col = c; break
+            if col and col in df.columns and not df.empty:
+                p = sfloat(df[col].iloc[-1], float("nan"))
+                if math.isfinite(p):
+                    return p
+        except Exception:
+            pass
+
+    # 4) last price in our own CSV
+    if getattr(args, "price_use_last_csv", False) and getattr(args, "csv", None) and os.path.exists(args.csv):
+        try:
+            import pandas as pd
+            df = pd.read_csv(args.csv)
+            if "price" in df.columns and not df.empty:
+                p = sfloat(df["price"].iloc[-1], float("nan"))
+                if math.isfinite(p):
+                    return p
+        except Exception:
+            pass
+
+    return None
+# ------------------------------------------
 
 _rng = np.random.default_rng(40)
 def _mock_vec(bias=1.0):
@@ -61,15 +140,26 @@ class AgentOut:
     phase_vector: np.ndarray
     @staticmethod
     def from_json(d:Dict[str,Any])->'AgentOut':
+        vol = (d.get('volume') or {})
+        vr  = vol.get('ratio_1h_to_avg20', 1.0)
+        vol_ratio = sfloat(vr, 1.0)
+        si = sfloat(d.get('sentiment_index', 0.0), 0.0)
+        pvec_raw = d.get('phase_vector', [1,1,1,1,1])
+        try:
+            pvec = np.array(pvec_raw, dtype=float)
+            if not np.all(np.isfinite(pvec)):
+                pvec = np.nan_to_num(pvec, nan=0.0, posinf=0.0, neginf=0.0)
+        except Exception:
+            pvec = np.array([1,1,1,1,1], dtype=float)
         return AgentOut(
             tf_alignment=d.get('tf_alignment',{'H4':'neutral','H1':'neutral'}),
             indicators=d.get('indicators',{}),
-            volume_ratio=float(d.get('volume',{}).get('ratio_1h_to_avg20',1.0)),
+            volume_ratio=vol_ratio,
             leaders=d.get('leaders',{}),
             flows=d.get('flows',{}),
-            sentiment_index=float(d.get('sentiment_index',0.0)),
+            sentiment_index=si,
             levels=d.get('levels',{}), scenarios=d.get('scenarios',[]),
-            phase_vector=np.array(d.get('phase_vector',[1,1,1,1,1]), dtype=float),
+            phase_vector=pvec,
         )
 
 def c_raw_from_delta(delta_phi:np.ndarray, kappa:float=25.0)->float:
@@ -168,6 +258,12 @@ def main():
     ap.add_argument('--data_dir',default='C:/OPRT/data')
     ap.add_argument('--heartbeat',default=r'C:\\OPRT\\logs\\engine_heartbeat.txt')
     ap.add_argument('--price',type=float,default=float('nan'))
+    # NEW price sources
+    ap.add_argument('--price_file',type=str,default=None, help='JSON {"price": float}')
+    ap.add_argument('--price_cache_csv',type=str,default=None, help='CSV with price/close column')
+    ap.add_argument('--price_field',type=str,default=None, help='Column to use in price_cache_csv')
+    ap.add_argument('--price_use_last_csv',action='store_true',default=False, help='Use last price from our own CSV')
+
     ap.add_argument('--kappa',type=float,default=20.0)
     ap.add_argument('--sentiment_index',type=float,default=None)
     ap.add_argument('--volume_ratio',type=float,default=None)
@@ -186,14 +282,15 @@ def main():
 
     # LITE
     ap.add_argument('--lite_enable',action='store_true',default=True)
-    ap.add_argument('--lite_angle_min',type=float,default=12.0)   # was 10.0
+    ap.add_argument('--lite_angle_min',type=float,default=12.0)
     ap.add_argument('--lite_angle_max',type=float,default=45.0)
     ap.add_argument('--lite_ceff_enter',type=float,default=48.0)
     ap.add_argument('--lite_coh_enter',type=float,default=0.35)
     ap.add_argument('--lite_vol_enter',type=float,default=0.95)
-    ap.add_argument('--lite_rescue_min_vol',type=float,default=0.85)  # NEW (was hard 0.75)
+    ap.add_argument('--lite_rescue_min_vol',type=float,default=0.85)
     ap.add_argument('--lite_pabs_enter',type=float,default=0.0)
 
+    # NEW / verified inputs for glue
     ap.add_argument('--flows_file',type=str,default=None)
     ap.add_argument('--pressure_file',type=str,default=None)
     ap.add_argument('--pressure_mode',choices=['on','off'],default=None)
@@ -207,6 +304,7 @@ def main():
     ap.add_argument('--lite_starve_cycles',type=int,default=None)
     args=ap.parse_args()
 
+    # normalize pressure flag
     if args.pressure_mode is not None:
         args.pressure_gate = args.pressure_mode
 
@@ -215,6 +313,9 @@ def main():
     si_mult   = 0.25 if args.si_conflict_mult is None else float(args.si_conflict_mult)
     if args.si_conflict_multiplier is not None:
         si_mult = float(args.si_conflict_multiplier)
+
+    # Resolve price once per run
+    px = resolve_price(args)
 
     # Agents load (mock if missing)
     agentA={}; agentB={}
@@ -227,14 +328,27 @@ def main():
         agentA[asset]=AgentOut.from_json(aj); agentB[asset]=AgentOut.from_json(bj)
 
     A=agentA['BTC']
-    if args.sentiment_index is not None: A.sentiment_index=args.sentiment_index
-    if args.volume_ratio is not None: A.volume_ratio=args.volume_ratio
+    # CLI overrides safe-floated
+    if args.sentiment_index is not None: A.sentiment_index = sfloat(args.sentiment_index, A.sentiment_index)
+    if args.volume_ratio   is not None: A.volume_ratio    = sfloat(args.volume_ratio,    A.volume_ratio)
+
     if args.flows:
         try: A.flows.update(json.loads(args.flows))
         except Exception: pass
     if args.flows_file and os.path.exists(args.flows_file):
         try: A.flows.update(json.load(open(args.flows_file,'r',encoding='utf-8')))
         except Exception: pass
+
+    # ---- pressure ingest (optional) ----
+    pressure_val = None
+    if args.pressure_file and os.path.exists(args.pressure_file):
+        try:
+            with open(args.pressure_file, "r", encoding="utf-8") as f:
+                pj = json.load(f)
+            # expect {"pressure": -1..+1}
+            pressure_val = sfloat(pj.get("pressure"), None)
+        except Exception:
+            pressure_val = None
 
     # Coherence + global alignment
     delta_by_asset={a:(agentA[a].phase_vector-agentB[a].phase_vector) for a in ASSETS}
@@ -244,9 +358,15 @@ def main():
     angle=phase_angle_deg(btc_delta,global_vec)
     C_loc,align_note=apply_global_alignment(C_raw,angle)
 
+    # --- herald (leaders vs flows) with OR/AND control ---
     leaders_ok = (A.leaders.get("ETH")=="+") or (A.leaders.get("SOL")=="+")
     flows_ok   = (A.flows.get("oi","").lower()=="up") and (A.flows.get("liq_skew","").lower()=="short")
-    herald_ok  = bool(leaders_ok or flows_ok)
+    if args.herald_mode == "any":
+        herald_ok  = bool(leaders_ok or flows_ok)
+    else:
+        herald_ok  = bool(leaders_ok and flows_ok)
+    herald_str = "OR" if args.herald_mode=="any" else "AND"
+
     trap_T_fg  = float(round(trap_probability(A.volume_ratio), 3))
 
     # FASTGATE (volume low) -> explicit WATCH
@@ -256,15 +376,15 @@ def main():
             w=csv.writer(fp)
             if new_csv:
                 w.writerow(['timestamp_utc','asset','price','C_eff','phase_angle_deg','volume_ratio','signal','size_band','mode','trap_T'])
-            w.writerow([now_iso_utc(),'BTC',None,round(C_loc,3),round(angle,2),float(A.volume_ratio),
+            w.writerow([now_iso_utc(),'BTC',px, round(C_loc,3),round(angle,2),float(A.volume_ratio),
                         'WATCH','Watch','baseline',trap_T_fg])
 
         out = {
             'timestamp_utc': now_iso_utc(),
             'asset': 'BTC',
             'signal': 'WATCH',
-            'size_band': 'Watch',           # <— NEW explicit
-            'mode': 'baseline',             # <— explicit
+            'size_band': 'Watch',
+            'mode': 'baseline',
             'reason': 'volume_low_fastgate',
             'is_watch': True,
             'volume_ratio': float(A.volume_ratio),
@@ -273,6 +393,7 @@ def main():
             'herald_ok': bool(herald_ok),
             'leaders_ok': bool(leaders_ok),
             'flows_ok': bool(flows_ok),
+            'herald_mode': herald_str,
             'lane': (args.experiment_id or 'baseline'),
             'experiment_id': (args.experiment_id or 'baseline'),
             'checks_values': {
@@ -283,7 +404,8 @@ def main():
             'failed_checks': ['volume'],
             'hard_gate_reason': 'volume',
             'conditions_ready': False,
-            'gate_note': 'watch_fastgate'
+            'gate_note': 'watch_fastgate',
+            'price': px
         }
         ensure_dir(args.jsonl)
         open(args.jsonl,'a',encoding='utf-8').write(json.dumps(out)+'\n')
@@ -293,13 +415,20 @@ def main():
 
     # Tech & gates
     tech_sign=tech_bias_sign_from_tf(A.tf_alignment)
-    g_tech, tech_detail=compute_tech_detail(A, args.price if math.isfinite(args.price) else float('nan'))
+    g_tech, tech_detail=compute_tech_detail(A, px if px is not None else float('nan'))
     g_volume=gate_volume(A.volume_ratio)
     g_tf=gate_tf(tech_sign)
     g_sent=gate_sentiment_conflict(A.sentiment_index, tech_sign, args.si_conflict_threshold, si_mult)
     g_flow=gate_flows(A.flows, up_short_mult=up_mult, down_long_mult=down_mult)
+
+    # --- pressure gate multiplier (±15% cap), aligned with direction ---
+    g_pressure = 1.0
+    if (args.pressure_gate == 'on') and (pressure_val is not None) and (tech_sign != 0):
+        aligned = pressure_val if tech_sign > 0 else -pressure_val
+        g_pressure = max(0.85, min(1.15, 1.0 + 0.15 * aligned))
+
     trap_T=float(round(trap_probability(A.volume_ratio),3))
-    C_eff=C_loc*g_volume*g_tf*g_sent*g_flow*g_tech
+    C_eff=C_loc*g_volume*g_tf*g_sent*g_flow*g_tech*g_pressure
 
     thr_full = args.strong_ceff_enter_quiet if A.volume_ratio < 1.0 else args.strong_ceff_enter_active
     amin=args.strong_angle_min; amax=args.strong_angle_max
@@ -314,9 +443,13 @@ def main():
     except Exception:
         pass
 
+    # recompute herald for checks block (same OR/AND rule)
     leaders_ok = (A.leaders.get("ETH")=="+") or (A.leaders.get("SOL")=="+")
     flows_ok   = (A.flows.get("oi","").lower()=="up") and (A.flows.get("liq_skew","").lower()=="short")
-    herald_ok  = bool(leaders_ok or flows_ok)
+    if args.herald_mode == "any":
+        herald_ok  = bool(leaders_ok or flows_ok)
+    else:
+        herald_ok  = bool(leaders_ok and flows_ok)
     tf_ok      = (tech_sign!=0)
 
     phase_strong_ok = (angle <= amax)  # min angle covered in checks
@@ -372,7 +505,9 @@ def main():
 
     size_band = 'Half' if mode=='lite' else size_band_from_ce(C_eff, thr_full)
 
-    print(f"[EXP] {args.experiment_id or 'baseline'} | mode={mode} | vol={A.volume_ratio:.3f} | angle={angle:.2f} | Ceff={C_eff:.2f} | gates(vol={g_volume:.2f},tech={g_tech:.2f},sent={g_sent:.2f},flow={g_flow:.2f}) | TFok={tf_ok} Herald={herald_ok} | trapT={trap_T} | align={align_note} | {gate_note}")
+    print(f"[EXP] {args.experiment_id or 'baseline'} | mode={mode} | vol={A.volume_ratio:.3f} | angle={angle:.2f} | Ceff={C_eff:.2f} | "
+          f"gates(vol={g_volume:.2f},tech={g_tech:.2f},sent={g_sent:.2f},flow={g_flow:.2f},pressure={g_pressure:.2f}) | "
+          f"TFok={tf_ok} Herald({herald_str})={herald_ok} | trapT={trap_T} | align={align_note} | {gate_note}")
 
     failed_checks=[k for k,v in checks.items() if v is False]
     hard_gate_reason = None
@@ -387,10 +522,12 @@ def main():
         'kappa': float(args.kappa),
         'experiment_id': (args.experiment_id or 'baseline'),
         'lane': (args.experiment_id or 'baseline'),
-        'herald_mode':'OR',
+        'herald_mode': herald_str,
         'leaders_ok': bool(leaders_ok),
         'flows_ok': bool(flows_ok),
         'herald_ok': bool(herald_ok),
+        'pressure': pressure_val,
+        'g_pressure': round(g_pressure, 2),
         'signal': signal,
         'w_code': w_code,
         'size_band': size_band,
@@ -398,7 +535,7 @@ def main():
         'C_eff': round(C_eff,3),
         'phase_angle_deg': round(angle,2),
         'volume_ratio': float(A.volume_ratio),
-        'price': (float(args.price) if math.isfinite(args.price) else None),
+        'price': (px if px is not None else (float(args.price) if math.isfinite(args.price) else None)),
         'regime': ('quiet' if A.volume_ratio<1.0 else 'active'),
         'trap_T': trap_T,
         'tech_coh': float(tech_detail['coh']),
@@ -426,9 +563,10 @@ def main():
         w=csv.writer(fp)
         if not csv_exists:
             w.writerow(['timestamp_utc','asset','price','C_eff','phase_angle_deg','volume_ratio','signal','size_band','mode','trap_T'])
-        w.writerow([summary['timestamp_utc'],'BTC',summary['price'],summary['C_eff'],
-                    summary['phase_angle_deg'],summary['volume_ratio'],summary['signal'],
-                    summary['size_band'],summary['mode'],summary['trap_T']])
+        w.writerow([summary['timestamp_utc'],'BTC',
+                    (px if px is not None else summary['price']),
+                    summary['C_eff'], summary['phase_angle_deg'], summary['volume_ratio'],
+                    summary['signal'], summary['size_band'], summary['mode'], summary['trap_T']])
 
     ensure_dir(args.jsonl)
     open(args.jsonl,'a',encoding='utf-8').write(json.dumps(summary,ensure_ascii=False)+'\n')
