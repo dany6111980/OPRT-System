@@ -5,3 +5,14 @@ config/*key*.txt
 *.key
 *key*.txt
 .env
+logs/
+reports/
+data/
+**/*.log
+**/*.csv
+**/*.jsonl
+hybrid_agent/out/*.md
+hybrid_agent/queue/*.sqlite
+hybrid_agent/runtime/*.txt
+.venv/
+__pycache__/
