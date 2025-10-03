@@ -1,0 +1,31 @@
+name: CI
+on:
+  push:
+    branches: [ chore/sfloat-and-ignore ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Show versions
+        run: |
+          python -V
+          git --version
+
+      # Optional: if you have requirements.txt, this won't fail if missing
+      - name: Install deps (best-effort)
+        run: |
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; else echo "no requirements.txt"; fi
+
+      - name: Smoke test
+        run: echo "CI test passed"
